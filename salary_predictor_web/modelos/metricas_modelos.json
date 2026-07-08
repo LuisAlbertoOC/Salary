@@ -1,0 +1,20 @@
+{
+    "Modelo 7 original reentrenado": {
+        "archivo_json": "modelo7_original_reentrenado.json",
+        "mae": 10.041780471801758,
+        "rmse": 68.60561543161026,
+        "descripcion": "Modelo base reentrenado con CSV limpio"
+    },
+    "Modelo 7.1": {
+        "archivo_json": "modelo7_1.json",
+        "mae": 9.94107437133789,
+        "rmse": 68.6495110768733,
+        "descripcion": "Versión intermedia con regularización, Huber y reducción de learning rate"
+    },
+    "Modelo 7.3 final": {
+        "archivo_json": "modelo7_3_final.json",
+        "mae": 9.45994758605957,
+        "rmse": 68.67767147038221,
+        "descripcion": "Mejor versión; obtuvo el menor MAE de prueba"
+    }
+}
