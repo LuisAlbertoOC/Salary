@@ -1,16 +1,7 @@
-import os
 import json
-import gc
 import joblib
 import numpy as np
 import pandas as pd
-
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
-os.environ["OMP_NUM_THREADS"] = "1"
-os.environ["TF_NUM_INTRAOP_THREADS"] = "1"
-os.environ["TF_NUM_INTEROP_THREADS"] = "1"
-
-import tensorflow as tf
 
 from pathlib import Path
 from flask import Flask, render_template, request
@@ -22,25 +13,67 @@ BASE_DIR = Path(__file__).resolve().parent
 MODELOS_DIR = BASE_DIR / "modelos"
 
 
-# Cargar scaler
 scaler_modelo7 = joblib.load(
     MODELOS_DIR / "scaler_modelo7.pkl"
 )
 
-# Cargar columnas
 with open(MODELOS_DIR / "columnas_modelo7.json", "r", encoding="utf-8") as archivo:
     columnas_modelo7 = json.load(archivo)
 
-# Cargar métricas
 with open(MODELOS_DIR / "metricas_modelos.json", "r", encoding="utf-8") as archivo:
     metricas_modelos = json.load(archivo)
 
 
-modelos_archivos = {
-    "Modelo 7 original reentrenado": "modelo7_original_reentrenado.h5",
-    "Modelo 7.1": "modelo7_1.h5",
-    "Modelo 7.3 final": "modelo7_3_final.h5"
+def cargar_modelo_json(nombre_archivo):
+    with open(MODELOS_DIR / nombre_archivo, "r", encoding="utf-8") as archivo:
+        return json.load(archivo)
+
+
+modelos = {
+    "Modelo 7 original reentrenado": cargar_modelo_json(
+        "modelo7_original_reentrenado.json"
+    ),
+    "Modelo 7.1": cargar_modelo_json(
+        "modelo7_1.json"
+    ),
+    "Modelo 7.3 final": cargar_modelo_json(
+        "modelo7_3_final.json"
+    )
 }
+
+
+def relu(x):
+    return np.maximum(0, x)
+
+
+def predecir_numpy(modelo_json, entrada):
+    salida = entrada.astype(np.float32)
+
+    for capa in modelo_json["layers"]:
+        pesos = np.array(
+            capa["weights"],
+            dtype=np.float32
+        )
+
+        bias = np.array(
+            capa["bias"],
+            dtype=np.float32
+        )
+
+        salida = np.matmul(salida, pesos) + bias
+
+        activation = capa["activation"]
+
+        if activation == "relu":
+            salida = relu(salida)
+        elif activation == "linear":
+            pass
+        else:
+            raise ValueError(
+                f"Activación no soportada: {activation}"
+            )
+
+    return float(salida[0][0])
 
 
 def calcular_edad(fecha_nacimiento):
@@ -96,41 +129,20 @@ def preparar_entrada(experience, qualification, university, role, cert):
     if "Experience" in entrada.columns:
         entrada.loc[0, "Experience"] = experience
 
-    columnas_posibles = [
+    columnas_activas = [
         f"Qualification_{qualification}",
         f"University_{university}",
         f"Role_{role}",
         f"Cert_{cert}"
     ]
 
-    for columna in columnas_posibles:
+    for columna in columnas_activas:
         if columna in entrada.columns:
             entrada.loc[0, columna] = 1
 
     entrada_norm = scaler_modelo7.transform(entrada)
 
-    return entrada_norm.astype("float32")
-
-
-def predecir_con_modelo(nombre_modelo, entrada_norm):
-    archivo_modelo = modelos_archivos[nombre_modelo]
-    ruta_modelo = MODELOS_DIR / archivo_modelo
-
-    modelo = tf.keras.models.load_model(
-        ruta_modelo,
-        compile=False
-    )
-
-    prediccion = modelo(
-        entrada_norm,
-        training=False
-    ).numpy()[0][0]
-
-    del modelo
-    tf.keras.backend.clear_session()
-    gc.collect()
-
-    return float(prediccion)
+    return entrada_norm.astype(np.float32)
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -181,9 +193,9 @@ def index():
 
                 resultados = []
 
-                for nombre_modelo in modelos_archivos:
-                    salario_predicho = predecir_con_modelo(
-                        nombre_modelo,
+                for nombre_modelo, modelo_json in modelos.items():
+                    prediccion = predecir_numpy(
+                        modelo_json,
                         entrada_norm
                     )
 
@@ -194,7 +206,7 @@ def index():
 
                     resultados.append({
                         "modelo": nombre_modelo,
-                        "salario_quincenal": salario_predicho,
+                        "salario_quincenal": prediccion,
                         "mae": metricas.get("mae", 0),
                         "rmse": metricas.get("rmse", 0),
                         "descripcion": metricas.get("descripcion", "")
