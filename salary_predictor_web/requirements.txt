@@ -1,0 +1,8 @@
+flask
+gunicorn
+tensorflow-cpu
+pandas
+numpy
+scikit-learn
+joblib
+h5py
