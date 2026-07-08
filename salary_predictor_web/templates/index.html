@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Predicción de salario quincenal</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background: #f4f4f4;
+        }
+
+        .contenedor {
+            background: white;
+            padding: 25px;
+            max-width: 900px;
+            margin: auto;
+            border-radius: 10px;
+        }
+
+        label {
+            display: block;
+            margin-top: 12px;
+            font-weight: bold;
+        }
+
+        input, select, button {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+        }
+
+        button {
+            margin-top: 20px;
+            background: #222;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        table {
+            width: 100%;
+            margin-top: 25px;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background: #222;
+            color: white;
+        }
+
+        .error {
+            background: #ffd4d4;
+            padding: 12px;
+            margin-top: 15px;
+            border-radius: 5px;
+        }
+
+        .mejor {
+            background: #d9ffd9;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="contenedor">
+        <h1>Predicción de salario quincenal</h1>
+
+        <p>
+            Esta aplicación compara tres versiones del Modelo 7.
+            El Modelo 7.3 es el mejor porque obtuvo el menor MAE en prueba.
+        </p>
+
+        <form method="POST">
+            <label>Nombre</label>
+            <input type="text" name="nombre" required>
+
+            <label>Fecha de nacimiento</label>
+            <input type="date" name="fecha_nacimiento" required>
+
+            <label>Phone number</label>
+            <input type="text" name="phone_number" required>
+
+            <label>Años de experiencia</label>
+            <input type="number" name="experience" min="0" max="60" required>
+
+            <label>Qualification</label>
+            <select name="qualification" required>
+                <option value="Bsc">Bsc</option>
+                <option value="Msc">Msc</option>
+                <option value="PhD">PhD</option>
+            </select>
+
+            <label>University</label>
+            <select name="university" required>
+                <option value="Tier1">Tier1</option>
+                <option value="Tier2">Tier2</option>
+                <option value="Tier3">Tier3</option>
+            </select>
+
+            <label>Role</label>
+            <select name="role" required>
+                <option value="Junior">Junior</option>
+                <option value="Mid">Mid</option>
+                <option value="Senior">Senior</option>
+            </select>
+
+            <label>Certificación</label>
+            <select name="cert" required>
+                <option value="No">No</option>
+                <option value="Yes">Yes</option>
+            </select>
+
+            <button type="submit">Predecir salario</button>
+        </form>
+
+        {% if error %}
+            <div class="error">
+                {{ error }}
+            </div>
+        {% endif %}
+
+        {% if datos_usuario %}
+            <h2>Datos capturados</h2>
+            <p><strong>Nombre:</strong> {{ datos_usuario.nombre }}</p>
+            <p><strong>Edad calculada:</strong> {{ datos_usuario.edad }}</p>
+            <p><strong>Experiencia:</strong> {{ datos_usuario.experience }} años</p>
+        {% endif %}
+
+        {% if resultados %}
+            <h2>Resultados de los modelos</h2>
+
+            <table>
+                <tr>
+                    <th>Modelo</th>
+                    <th>Salario quincenal estimado</th>
+                    <th>MAE de prueba</th>
+                    <th>RMSE de prueba</th>
+                    <th>Comentario</th>
+                </tr>
+
+                {% for resultado in resultados %}
+                    <tr class="{% if loop.first %}mejor{% endif %}">
+                        <td>{{ resultado.modelo }}</td>
+                        <td>${{ "{:,.2f}".format(resultado.salario_quincenal) }}</td>
+                        <td>${{ "{:,.2f}".format(resultado.mae) }}</td>
+                        <td>${{ "{:,.2f}".format(resultado.rmse) }}</td>
+                        <td>{{ resultado.descripcion }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+
+            <p>
+                La tabla se ordena por MAE. El modelo con menor MAE aparece primero
+                porque tiene menor error promedio de predicción.
+            </p>
+        {% endif %}
+    </div>
+</body>
+</html>
