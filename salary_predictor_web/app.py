@@ -1,7 +1,15 @@
+import os
 import json
+import gc
 import joblib
 import numpy as np
 import pandas as pd
+
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["TF_NUM_INTRAOP_THREADS"] = "1"
+os.environ["TF_NUM_INTEROP_THREADS"] = "1"
+
 import tensorflow as tf
 
 from pathlib import Path
@@ -13,22 +21,6 @@ app = Flask(__name__)
 BASE_DIR = Path(__file__).resolve().parent
 MODELOS_DIR = BASE_DIR / "modelos"
 
-
-# Cargar modelos
-modelos = {
-    "Modelo 7 original reentrenado": tf.keras.models.load_model(
-        MODELOS_DIR / "modelo7_original_reentrenado.h5",
-        compile=False
-    ),
-    "Modelo 7.1": tf.keras.models.load_model(
-        MODELOS_DIR / "modelo7_1.h5",
-        compile=False
-    ),
-    "Modelo 7.3 final": tf.keras.models.load_model(
-        MODELOS_DIR / "modelo7_3_final.h5",
-        compile=False
-    )
-}
 
 # Cargar scaler
 scaler_modelo7 = joblib.load(
@@ -42,6 +34,13 @@ with open(MODELOS_DIR / "columnas_modelo7.json", "r", encoding="utf-8") as archi
 # Cargar métricas
 with open(MODELOS_DIR / "metricas_modelos.json", "r", encoding="utf-8") as archivo:
     metricas_modelos = json.load(archivo)
+
+
+modelos_archivos = {
+    "Modelo 7 original reentrenado": "modelo7_original_reentrenado.h5",
+    "Modelo 7.1": "modelo7_1.h5",
+    "Modelo 7.3 final": "modelo7_3_final.h5"
+}
 
 
 def calcular_edad(fecha_nacimiento):
@@ -89,10 +88,6 @@ def validar_edad_experiencia(fecha_nacimiento, experiencia):
 
 
 def preparar_entrada(experience, qualification, university, role, cert):
-    """
-    Crea una fila con las mismas columnas usadas durante el entrenamiento.
-    """
-
     entrada = pd.DataFrame(
         np.zeros((1, len(columnas_modelo7))),
         columns=columnas_modelo7
@@ -101,23 +96,41 @@ def preparar_entrada(experience, qualification, university, role, cert):
     if "Experience" in entrada.columns:
         entrada.loc[0, "Experience"] = experience
 
-    columna_qualification = f"Qualification_{qualification}"
-    columna_university = f"University_{university}"
-    columna_role = f"Role_{role}"
-    columna_cert = f"Cert_{cert}"
+    columnas_posibles = [
+        f"Qualification_{qualification}",
+        f"University_{university}",
+        f"Role_{role}",
+        f"Cert_{cert}"
+    ]
 
-    for columna in [
-        columna_qualification,
-        columna_university,
-        columna_role,
-        columna_cert
-    ]:
+    for columna in columnas_posibles:
         if columna in entrada.columns:
             entrada.loc[0, columna] = 1
 
     entrada_norm = scaler_modelo7.transform(entrada)
 
-    return entrada_norm
+    return entrada_norm.astype("float32")
+
+
+def predecir_con_modelo(nombre_modelo, entrada_norm):
+    archivo_modelo = modelos_archivos[nombre_modelo]
+    ruta_modelo = MODELOS_DIR / archivo_modelo
+
+    modelo = tf.keras.models.load_model(
+        ruta_modelo,
+        compile=False
+    )
+
+    prediccion = modelo(
+        entrada_norm,
+        training=False
+    ).numpy()[0][0]
+
+    del modelo
+    tf.keras.backend.clear_session()
+    gc.collect()
+
+    return float(prediccion)
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -168,11 +181,11 @@ def index():
 
                 resultados = []
 
-                for nombre_modelo, modelo in modelos.items():
-                    prediccion = modelo.predict(
-                        entrada_norm,
-                        verbose=0
-                    )[0][0]
+                for nombre_modelo in modelos_archivos:
+                    salario_predicho = predecir_con_modelo(
+                        nombre_modelo,
+                        entrada_norm
+                    )
 
                     metricas = metricas_modelos.get(
                         nombre_modelo,
@@ -181,10 +194,10 @@ def index():
 
                     resultados.append({
                         "modelo": nombre_modelo,
-                        "salario_quincenal": prediccion,
-                        "mae": metricas.get("mae"),
-                        "rmse": metricas.get("rmse"),
-                        "descripcion": metricas.get("descripcion")
+                        "salario_quincenal": salario_predicho,
+                        "mae": metricas.get("mae", 0),
+                        "rmse": metricas.get("rmse", 0),
+                        "descripcion": metricas.get("descripcion", "")
                     })
 
                 resultados = sorted(
@@ -204,4 +217,4 @@ def index():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)
