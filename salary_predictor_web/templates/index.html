@@ -2,167 +2,630 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Predicción de salario quincenal</title>
+    <title>RH - Predicción de salario quincenal</title>
 
     <style>
+        :root {
+            --cafe-oscuro: #2f1f14;
+            --cafe-medio: #5b3a1f;
+            --dorado: #f2b632;
+            --dorado-suave: #f7d27a;
+            --beige: #f3dfb4;
+            --beige-claro: #fff8e8;
+            --blanco: #ffffff;
+            --gris: #6b6b6b;
+            --gris-claro: #eeeeee;
+            --verde-suave: #d9f7d8;
+            --verde-borde: #7fc97f;
+            --rojo-suave: #ffe1dc;
+            --rojo: #9f2d20;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
-            background: #f4f4f4;
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--beige-claro),
+                    var(--beige)
+                );
+            color: var(--cafe-oscuro);
+        }
+
+        .topbar {
+            background: var(--cafe-oscuro);
+            color: var(--beige-claro);
+            padding: 22px 40px;
+            border-bottom: 6px solid var(--dorado);
+        }
+
+        .topbar h1 {
+            margin: 0;
+            font-size: 30px;
+            letter-spacing: 0.5px;
+        }
+
+        .topbar p {
+            margin: 8px 0 0;
+            color: var(--dorado-suave);
+            font-size: 15px;
         }
 
         .contenedor {
-            background: white;
-            padding: 25px;
-            max-width: 900px;
-            margin: auto;
-            border-radius: 10px;
+            max-width: 1180px;
+            margin: 30px auto;
+            padding: 0 20px 40px;
         }
 
-        label {
+        .layout {
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+
+        .tarjeta {
+            background: var(--blanco);
+            border-radius: 18px;
+            box-shadow: 0 8px 24px rgba(47, 31, 20, 0.18);
+            overflow: hidden;
+            border: 1px solid rgba(47, 31, 20, 0.12);
+        }
+
+        .tarjeta-header {
+            background: var(--cafe-oscuro);
+            color: var(--beige-claro);
+            padding: 18px 22px;
+        }
+
+        .tarjeta-header h2 {
+            margin: 0;
+            font-size: 21px;
+        }
+
+        .tarjeta-header p {
+            margin: 6px 0 0;
+            color: var(--dorado-suave);
+            font-size: 13px;
+        }
+
+        .tarjeta-body {
+            padding: 22px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 14px;
+        }
+
+        .grupo label {
             display: block;
-            margin-top: 12px;
             font-weight: bold;
+            font-size: 13px;
+            margin-bottom: 6px;
+            color: var(--cafe-oscuro);
         }
 
-        input, select, button {
+        .grupo input,
+        .grupo select {
             width: 100%;
-            padding: 8px;
-            margin-top: 5px;
+            padding: 11px 12px;
+            border-radius: 10px;
+            border: 1px solid #c9b58c;
+            background: #fffdf7;
+            font-size: 14px;
+            color: var(--cafe-oscuro);
+            outline: none;
+        }
+
+        .grupo input:focus,
+        .grupo select:focus {
+            border-color: var(--dorado);
+            box-shadow: 0 0 0 3px rgba(242, 182, 50, 0.28);
+        }
+
+        .dos-columnas {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .nota {
+            margin-top: 14px;
+            padding: 12px;
+            border-radius: 12px;
+            background: var(--beige-claro);
+            border-left: 5px solid var(--dorado);
+            font-size: 13px;
+            color: var(--cafe-medio);
+            line-height: 1.45;
         }
 
         button {
-            margin-top: 20px;
-            background: #222;
-            color: white;
+            margin-top: 18px;
+            width: 100%;
+            padding: 13px;
             border: none;
+            border-radius: 12px;
+            background: var(--dorado);
+            color: var(--cafe-oscuro);
+            font-weight: bold;
+            font-size: 16px;
             cursor: pointer;
+            transition: 0.2s ease;
+        }
+
+        button:hover {
+            background: #e6a91f;
+            transform: translateY(-1px);
+        }
+
+        .panel-info {
+            display: grid;
+            gap: 18px;
+        }
+
+        .resumen-candidato {
+            background: var(--blanco);
+            border-radius: 18px;
+            box-shadow: 0 8px 24px rgba(47, 31, 20, 0.14);
+            padding: 22px;
+            border: 1px solid rgba(47, 31, 20, 0.12);
+        }
+
+        .resumen-candidato h2 {
+            margin: 0 0 14px;
+            color: var(--cafe-oscuro);
+        }
+
+        .chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .chip {
+            background: var(--beige-claro);
+            border: 1px solid #d7bd83;
+            color: var(--cafe-oscuro);
+            padding: 9px 12px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .error {
+            background: var(--rojo-suave);
+            color: var(--rojo);
+            border-left: 6px solid var(--rojo);
+            padding: 15px;
+            border-radius: 12px;
+            font-weight: bold;
+            margin-bottom: 18px;
+        }
+
+        .resultados {
+            background: var(--blanco);
+            border-radius: 18px;
+            box-shadow: 0 8px 24px rgba(47, 31, 20, 0.14);
+            border: 1px solid rgba(47, 31, 20, 0.12);
+            overflow: hidden;
+        }
+
+        .resultados-header {
+            padding: 20px 22px;
+            background: var(--cafe-oscuro);
+            color: var(--beige-claro);
+        }
+
+        .resultados-header h2 {
+            margin: 0;
+        }
+
+        .resultados-header p {
+            margin: 6px 0 0;
+            color: var(--dorado-suave);
+            font-size: 13px;
+        }
+
+        .tabla-wrap {
+            overflow-x: auto;
         }
 
         table {
             width: 100%;
-            margin-top: 25px;
             border-collapse: collapse;
-        }
-
-        th, td {
-            border: 1px solid #ccc;
-            padding: 10px;
-            text-align: center;
+            min-width: 760px;
         }
 
         th {
-            background: #222;
-            color: white;
+            background: #3b2718;
+            color: var(--beige-claro);
+            padding: 14px;
+            font-size: 13px;
+            text-align: center;
+            border-bottom: 3px solid var(--dorado);
         }
 
-        .error {
-            background: #ffd4d4;
-            padding: 12px;
-            margin-top: 15px;
-            border-radius: 5px;
+        td {
+            padding: 14px;
+            text-align: center;
+            border-bottom: 1px solid #e2d5b9;
+            font-size: 14px;
         }
 
-        .mejor {
-            background: #d9ffd9;
+        tr.mejor {
+            background: var(--verde-suave);
+            outline: 2px solid var(--verde-borde);
             font-weight: bold;
+        }
+
+        .modelo-nombre {
+            font-weight: bold;
+            color: var(--cafe-oscuro);
+        }
+
+        .salario {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--cafe-oscuro);
+        }
+
+        .badge-mejor {
+            display: inline-block;
+            margin-top: 6px;
+            background: var(--dorado);
+            color: var(--cafe-oscuro);
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .explicacion {
+            padding: 18px 22px;
+            background: var(--beige-claro);
+            color: var(--cafe-medio);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .estado-vacio {
+            background: var(--blanco);
+            border-radius: 18px;
+            box-shadow: 0 8px 24px rgba(47, 31, 20, 0.12);
+            padding: 28px;
+            text-align: center;
+            border: 1px dashed #c4a56a;
+        }
+
+        .estado-vacio h2 {
+            margin-top: 0;
+            color: var(--cafe-oscuro);
+        }
+
+        .estado-vacio p {
+            color: var(--gris);
+            line-height: 1.5;
+        }
+
+        .mini-card-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .mini-card {
+            background: var(--beige-claro);
+            border-radius: 14px;
+            padding: 14px;
+            border: 1px solid #d7bd83;
+        }
+
+        .mini-card strong {
+            display: block;
+            color: var(--cafe-oscuro);
+            margin-bottom: 4px;
+        }
+
+        .mini-card span {
+            color: var(--cafe-medio);
+            font-size: 13px;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 28px;
+            color: var(--cafe-medio);
+            font-size: 13px;
+        }
+
+        @media (max-width: 900px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .dos-columnas {
+                grid-template-columns: 1fr;
+            }
+
+            .mini-card-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .topbar {
+                padding: 20px;
+            }
         }
     </style>
 </head>
 
 <body>
-    <div class="contenedor">
-        <h1>Predicción de salario quincenal</h1>
-
+    <header class="topbar">
+        <h1>Panel de predicción salarial para RH</h1>
         <p>
-            Esta aplicación compara tres versiones del Modelo 7.
-            El Modelo 7.3 es el mejor porque obtuvo el menor MAE en prueba.
+            Estimación de salario quincenal con comparación de modelos entrenados.
         </p>
+    </header>
 
-        <form method="POST">
-            <label>Nombre</label>
-            <input type="text" name="nombre" required>
+    <main class="contenedor">
+        <div class="layout">
+            <section class="tarjeta">
+                <div class="tarjeta-header">
+                    <h2>Captura de candidato</h2>
+                    <p>Ingresa los datos disponibles del perfil laboral.</p>
+                </div>
 
-            <label>Fecha de nacimiento</label>
-            <input type="date" name="fecha_nacimiento" required>
+                <div class="tarjeta-body">
+                    <form method="POST">
+                        <div class="form-grid">
+                            <div class="grupo">
+                                <label>Nombre del candidato</label>
+                                <input
+                                    type="text"
+                                    name="nombre"
+                                    placeholder="Ej. Juan Perez"
+                                    required
+                                >
+                            </div>
 
-            <label>Phone number</label>
-            <input type="text" name="phone_number" required>
+                            <div class="dos-columnas">
+                                <div class="grupo">
+                                    <label>Fecha de nacimiento</label>
+                                    <input
+                                        type="date"
+                                        name="fecha_nacimiento"
+                                        required
+                                    >
+                                </div>
 
-            <label>Años de experiencia</label>
-            <input type="number" name="experience" min="0" max="60" required>
+                                <div class="grupo">
+                                    <label>Teléfono</label>
+                                    <input
+                                        type="text"
+                                        name="phone_number"
+                                        placeholder="Ej. 5551234567"
+                                        required
+                                    >
+                                </div>
+                            </div>
 
-            <label>Qualification</label>
-            <select name="qualification" required>
-                <option value="Bsc">Bsc</option>
-                <option value="Msc">Msc</option>
-                <option value="PhD">PhD</option>
-            </select>
+                            <div class="dos-columnas">
+                                <div class="grupo">
+                                    <label>Años de experiencia</label>
+                                    <input
+                                        type="number"
+                                        name="experience"
+                                        min="0"
+                                        max="60"
+                                        placeholder="Ej. 3"
+                                        required
+                                    >
+                                </div>
 
-            <label>University</label>
-            <select name="university" required>
-                <option value="Tier1">Tier1</option>
-                <option value="Tier2">Tier2</option>
-                <option value="Tier3">Tier3</option>
-            </select>
+                                <div class="grupo">
+                                    <label>Certificación</label>
+                                    <select name="cert" required>
+                                        <option value="No">No</option>
+                                        <option value="Yes">Yes</option>
+                                    </select>
+                                </div>
+                            </div>
 
-            <label>Role</label>
-            <select name="role" required>
-                <option value="Junior">Junior</option>
-                <option value="Mid">Mid</option>
-                <option value="Senior">Senior</option>
-            </select>
+                            <div class="grupo">
+                                <label>Nivel académico</label>
+                                <select name="qualification" required>
+                                    <option value="Bsc">Bsc</option>
+                                    <option value="Msc">Msc</option>
+                                    <option value="PhD">PhD</option>
+                                </select>
+                            </div>
 
-            <label>Certificación</label>
-            <select name="cert" required>
-                <option value="No">No</option>
-                <option value="Yes">Yes</option>
-            </select>
+                            <div class="dos-columnas">
+                                <div class="grupo">
+                                    <label>Universidad</label>
+                                    <select name="university" required>
+                                        <option value="Tier1">Tier1</option>
+                                        <option value="Tier2">Tier2</option>
+                                        <option value="Tier3">Tier3</option>
+                                    </select>
+                                </div>
 
-            <button type="submit">Predecir salario</button>
-        </form>
+                                <div class="grupo">
+                                    <label>Rol solicitado</label>
+                                    <select name="role" required>
+                                        <option value="Junior">Junior</option>
+                                        <option value="Mid">Mid</option>
+                                        <option value="Senior">Senior</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
 
-        {% if error %}
-            <div class="error">
-                {{ error }}
-            </div>
-        {% endif %}
+                        <div class="nota">
+                            La fecha de nacimiento se usa para validar que la edad
+                            sea compatible con los años de experiencia. Nombre y
+                            teléfono se conservan solo como datos de registro.
+                        </div>
 
-        {% if datos_usuario %}
-            <h2>Datos capturados</h2>
-            <p><strong>Nombre:</strong> {{ datos_usuario.nombre }}</p>
-            <p><strong>Edad calculada:</strong> {{ datos_usuario.edad }}</p>
-            <p><strong>Experiencia:</strong> {{ datos_usuario.experience }} años</p>
-        {% endif %}
+                        <button type="submit">
+                            Calcular salario sugerido
+                        </button>
+                    </form>
+                </div>
+            </section>
 
-        {% if resultados %}
-            <h2>Resultados de los modelos</h2>
+            <section class="panel-info">
+                {% if error %}
+                    <div class="error">
+                        {{ error }}
+                    </div>
+                {% endif %}
 
-            <table>
-                <tr>
-                    <th>Modelo</th>
-                    <th>Salario quincenal estimado</th>
-                    <th>MAE de prueba</th>
-                    <th>RMSE de prueba</th>
-                    <th>Comentario</th>
-                </tr>
+                {% if datos_usuario %}
+                    <div class="resumen-candidato">
+                        <h2>Resumen del candidato</h2>
 
-                {% for resultado in resultados %}
-                    <tr class="{% if loop.first %}mejor{% endif %}">
-                        <td>{{ resultado.modelo }}</td>
-                        <td>${{ "{:,.2f}".format(resultado.salario_quincenal) }}</td>
-                        <td>${{ "{:,.2f}".format(resultado.mae) }}</td>
-                        <td>${{ "{:,.2f}".format(resultado.rmse) }}</td>
-                        <td>{{ resultado.descripcion }}</td>
-                    </tr>
-                {% endfor %}
-            </table>
+                        <div class="chips">
+                            <div class="chip">
+                                Nombre: {{ datos_usuario.nombre }}
+                            </div>
 
-            <p>
-                La tabla se ordena por MAE. El modelo con menor MAE aparece primero
-                porque tiene menor error promedio de predicción.
-            </p>
-        {% endif %}
-    </div>
+                            <div class="chip">
+                                Edad: {{ datos_usuario.edad }}
+                            </div>
+
+                            <div class="chip">
+                                Experiencia: {{ datos_usuario.experience }} años
+                            </div>
+
+                            <div class="chip">
+                                Nivel: {{ datos_usuario.qualification }}
+                            </div>
+
+                            <div class="chip">
+                                Universidad: {{ datos_usuario.university }}
+                            </div>
+
+                            <div class="chip">
+                                Rol: {{ datos_usuario.role }}
+                            </div>
+
+                            <div class="chip">
+                                Certificación: {{ datos_usuario.cert }}
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+                {% if resultados %}
+                    <div class="resultados">
+                        <div class="resultados-header">
+                            <h2>Resultados de predicción</h2>
+                            <p>
+                                Los modelos se ordenan por menor MAE. El primer
+                                resultado es el modelo con menor error promedio.
+                            </p>
+                        </div>
+
+                        <div class="tabla-wrap">
+                            <table>
+                                <tr>
+                                    <th>Modelo</th>
+                                    <th>Salario quincenal estimado</th>
+                                    <th>MAE de prueba</th>
+                                    <th>RMSE de prueba</th>
+                                    <th>Comentario</th>
+                                </tr>
+
+                                {% for resultado in resultados %}
+                                    <tr class="{% if loop.first %}mejor{% endif %}">
+                                        <td>
+                                            <div class="modelo-nombre">
+                                                {{ resultado.modelo }}
+                                            </div>
+
+                                            {% if loop.first %}
+                                                <span class="badge-mejor">
+                                                    Modelo recomendado
+                                                </span>
+                                            {% endif %}
+                                        </td>
+
+                                        <td class="salario">
+                                            ${{ "{:,.2f}".format(resultado.salario_quincenal) }}
+                                        </td>
+
+                                        <td>
+                                            ${{ "{:,.2f}".format(resultado.mae) }}
+                                        </td>
+
+                                        <td>
+                                            ${{ "{:,.2f}".format(resultado.rmse) }}
+                                        </td>
+
+                                        <td>
+                                            {{ resultado.descripcion }}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </table>
+                        </div>
+
+                        <div class="explicacion">
+                            <strong>Interpretación para RH:</strong>
+                            el salario mostrado es una estimación quincenal.
+                            El MAE indica el error promedio del modelo; por eso,
+                            un MAE menor representa una predicción más confiable.
+                            El Modelo 7.3 aparece como recomendado porque obtuvo
+                            el menor MAE durante la evaluación.
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="estado-vacio">
+                        <h2>Listo para evaluar candidatos</h2>
+                        <p>
+                            Llena el formulario para obtener una estimación salarial
+                            quincenal y comparar las tres versiones del modelo.
+                        </p>
+
+                        <div class="mini-card-grid">
+                            <div class="mini-card">
+                                <strong>Validación</strong>
+                                <span>
+                                    Revisa que edad y experiencia sean coherentes.
+                                </span>
+                            </div>
+
+                            <div class="mini-card">
+                                <strong>Predicción</strong>
+                                <span>
+                                    Calcula salario quincenal estimado.
+                                </span>
+                            </div>
+
+                            <div class="mini-card">
+                                <strong>Comparación</strong>
+                                <span>
+                                    Muestra tres modelos ordenados por MAE.
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </section>
+        </div>
+
+        <footer>
+            Sistema de apoyo para RH basado en modelos de regresión salarial.
+        </footer>
+    </main>
 </body>
 </html>
